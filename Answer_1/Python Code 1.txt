@@ -1,0 +1,74 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+MAX_DATA_SIZE = 1000
+PLOT_WIDTH = 70
+PLOT_HEIGHT = 20
+
+def load_data(filename):
+    try:
+        data = np.loadtxt(filename)
+        return data
+    except IOError:
+        print(f"Error opening file: {filename}")
+        exit(1)
+
+def find_peaks(data, distance, prominence):
+    peaks = []
+    prominences = np.array([0] * len(data))
+    for i in range(distance, len(data) - distance):
+        is_peak = True
+        for j in range(1, distance + 1):
+            if data[i] <= data[i - j] or data[i] <= data[i + j]:
+                is_peak = False
+                break
+        if is_peak and data[i] > prominence:
+            peaks.append(i)
+            prominences[i] = data[i]
+    return np.array(peaks), prominences
+
+def plot_ascii(data, peaks, minima, label):
+    max_val = np.max(data)
+    min_val = np.min(data)
+
+    plot = np.full((PLOT_HEIGHT, PLOT_WIDTH), ' ')
+    for i in range(len(data)):
+        x = int((i * PLOT_WIDTH) / len(data))
+        y = int((data[i] - min_val) / (max_val - min_val) * (PLOT_HEIGHT - 1))
+        plot[PLOT_HEIGHT - 1 - y, x] = '*'
+
+    for p in peaks:
+        x = int((p * PLOT_WIDTH) / len(data))
+        y = int((data[p] - min_val) / (max_val - min_val) * (PLOT_HEIGHT - 1))
+        plot[PLOT_HEIGHT - 1 - y, x] = 'M'
+
+    for m in minima:
+        x = int((m * PLOT_WIDTH) / len(data))
+        y = int((data[m] - min_val) / (max_val - min_val) * (PLOT_HEIGHT - 1))
+        plot[PLOT_HEIGHT - 1 - y, x] = 'm'
+
+    print(f"\n{label}\n")
+    for row in plot:
+        print(''.join(row))
+
+def find_and_plot_peaks(data, label):
+    distance = 20
+    prominence = 0.5
+
+    peaks, _ = find_peaks(data, distance, prominence)
+
+    inversed_data = -data
+    minima, _ = find_peaks(inversed_data, distance, prominence)
+
+    plot_ascii(data, peaks, minima, label)
+
+def main():
+    data1 = load_data("/content/Data_1.txt")
+    data2 = load_data("/content/Data_2.txt")
+
+    find_and_plot_peaks(data1, "Data_1")
+    find_and_plot_peaks(data2, "Data_2")
+
+if __name__ == "__main__":
+    main()
+
